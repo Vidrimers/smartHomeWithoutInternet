@@ -49,7 +49,7 @@
 
 **Порядок установки:**
 1. Установить **Ubuntu Server 22.04 LTS** на FIREBAT (или 24.04 — оба подходят)
-2. Установить официальный Docker (уже сделано, если следовал этому руководству):
+2. Установить официальный Docker:
    ```bash
    sudo apt install -y ca-certificates curl gnupg
    sudo install -m 0755 -d /etc/apt/keyrings
