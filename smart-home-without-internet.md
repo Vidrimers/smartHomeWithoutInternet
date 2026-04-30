@@ -671,7 +671,11 @@ sudo docker restart homeassistant
 
 ### Шаг 2 — Установить LocalTuya через HACS
 
-В HA: **HACS → Integrations → поиск "LocalTuya" → Download**
+В HACS LocalTuya не всегда есть в стандартном каталоге — нужно добавить репозиторий вручную:
+
+1. В HACS нажать `⋮` (три точки) → **Пользовательские репозитории**
+2. Добавить: `https://github.com/rospogrigio/localtuya` → категория **Интеграция**
+3. Найти LocalTuya в списке и нажать **Скачать**
 
 После загрузки снова перезапустить HA:
 ```bash
@@ -680,19 +684,21 @@ sudo docker restart homeassistant
 
 ---
 
-### Шаг 3 — Получить Local Key устройств
+### Шаг 3 — Настроить Tuya IoT Platform (для автоматического получения ключей)
 
-Нужно зарегистрироваться на платформе Tuya для разработчиков:
+LocalTuya умеет получать Local Key устройств автоматически через Tuya Cloud API — это удобнее чем копировать вручную. Ключи также обновляются автоматически при перепривязке устройства.
 
 1. Зайти на [iot.tuya.com](https://iot.tuya.com) и создать аккаунт
 2. **Cloud → Development → Create Cloud Project**
    - Тип: Smart Home
    - Датацентр: Central Europe (или ближайший)
-3. В проекте: **Devices → Link Tuya App Account → Add App Account**
-4. Отсканировать QR-код через приложение HIPER IoT (или Tuya Smart)
-5. Все устройства появятся в списке с `Device ID` и `Local Key`
+   - Убедиться что проект создан **после 25 мая 2021** (старые проекты не работают)
+3. В проекте открыть **Overview** — скопировать `Client ID` и `Client Secret`
+4. В проекте: **Devices → Link Tuya App Account** — скопировать `User ID`
+5. Отсканировать QR-код через приложение HIPER IoT (или Tuya Smart)
 
-> ⚠️ Local Key нужно скопировать сразу — после изменения настроек устройства он может смениться.
+> ℹ️ Настройка Cloud API не обязательна — можно пропустить и ввести Local Key вручную.
+> Но с Cloud API ключи подтягиваются автоматически и не нужно их искать самому.
 
 ---
 
@@ -700,11 +706,11 @@ sudo docker restart homeassistant
 
 **Настройки → Интеграции → Добавить → LocalTuya**
 
-Для каждого устройства указать:
-- **Host** — IP устройства (назначить статический в роутере)
-- **Device ID** — из Tuya IoT Platform
-- **Local Key** — из Tuya IoT Platform
-- **Тип устройства** — выбрать из списка (лампочка, розетка и т.д.)
+При первом запуске появится форма Cloud API — ввести `Client ID`, `Client Secret`, `User ID` из Tuya IoT Platform. После этого LocalTuya сам найдёт устройства в сети и подтянет их ключи.
+
+Для каждого устройства нужно указать тип сущностей (лампочка, розетка, выключатель и т.д.) и привязать DP (data points) — номера параметров устройства. LocalTuya показывает доступные DP с текущими значениями, что упрощает настройку.
+
+> 📄 Подробная документация по LocalTuya: [localtuya-ru.md](./localtuya-ru.md) (русский) · [оригинал](https://github.com/rospogrigio/localtuya/blob/master/README.md)
 
 ---
 
@@ -730,4 +736,5 @@ sudo docker restart homeassistant
 - [ESPHome проекты](https://esphome.io/projects) — готовые конфигурации
 - [ESPHome Voice](https://voice.home-assistant.io) — прошивка ESP32 для голоса
 - [Broadlink интеграция в HA](https://www.home-assistant.io/integrations/broadlink) — документация
+- [LocalTuya — документация на русском](./localtuya-ru.md) · [оригинал](https://github.com/rospogrigio/localtuya/blob/master/README.md)
 - [Сообщество HA (русское)](https://t.me/home_assistant) — Telegram-сообщество
