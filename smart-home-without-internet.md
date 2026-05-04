@@ -686,7 +686,9 @@ sudo docker restart homeassistant
 
 ### Шаг 3 — Получить Local Key устройств
 
-LocalTuya требует **Local Key** для локального управления устройствами. Получить его можно через Tuya IoT Platform API.
+LocalTuya требует **Local Key** для локального управления **Wi-Fi устройствами Tuya**. Получить его можно через Tuya IoT Platform API.
+
+> ℹ️ **Примечание:** Zigbee устройства Tuya подключаются через Zigbee2MQTT и не требуют Local Key.
 
 **📄 Подробная инструкция:** [localKey.md](./localKey.md)
 
