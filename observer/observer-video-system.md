@@ -130,19 +130,68 @@ IP Камеры → Raspberry Pi / Мини‑ПК → Frigate → Home Assistan
 
 ## Мини‑ПК:
 
-- Ubuntu Server 22.04 LTS
+- **Ubuntu Server 24.04 LTS** (рекомендуется)
+- Или Ubuntu Server 22.04 LTS
 
 ---
 
 # 4. 🐳 Установка Docker + Docker Compose
 
+> **Важно:** Устанавливаем Docker из официального репозитория, а не из стандартных репозиториев Ubuntu.
+
+## Шаг 1: Обновление системы и установка зависимостей
+
 ```bash
 sudo apt update
-sudo apt install -y docker.io docker-compose
+sudo apt install -y ca-certificates curl
+```
+
+## Шаг 2: Добавление официального GPG-ключа Docker
+
+```bash
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+## Шаг 3: Добавление репозитория Docker
+
+```bash
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
+## Шаг 4: Установка Docker Engine и Docker Compose
+
+```bash
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+## Шаг 5: Добавление пользователя в группу docker
+
+```bash
 sudo usermod -aG docker $USER
 ```
 
-Перезагрузка.
+## Шаг 6: Перезагрузка
+
+```bash
+sudo reboot
+```
+
+## Проверка установки
+
+После перезагрузки проверь, что Docker работает:
+
+```bash
+docker --version
+docker compose version
+```
+
+Должно вывести версии Docker и Docker Compose.
 
 ---
 
@@ -151,12 +200,18 @@ sudo usermod -aG docker $USER
 ```bash
 mkdir -p ~/frigate/config
 mkdir -p ~/frigate/media
+cd ~/frigate
 ```
 
-Создать `docker-compose.yml`:
+Создай файл `docker-compose.yml`:
+
+```bash
+nano docker-compose.yml
+```
+
+Вставь следующее содержимое:
 
 ```yaml
-version: "3.9"
 services:
   frigate:
     container_name: frigate
@@ -168,19 +223,155 @@ services:
       - ./config:/config
       - ./media:/media/frigate
       - /etc/localtime:/etc/localtime:ro
-      - /dev/bus/usb:/dev/bus/usb
+      - /dev/bus/usb:/dev/bus/usb  # Для USB Coral (если используешь)
     ports:
-      - "5000:5000"
-      - "8554:8554"
-      - "8555:8555/tcp"
-      - "8555:8555/udp"
+      - "8971:8971"  # Authenticated UI (рекомендуется)
+      - "5000:5000"  # Internal unauthenticated UI
+      - "8554:8554"  # RTSP restreaming
+      - "8555:8555/tcp"  # WebRTC
+      - "8555:8555/udp"  # WebRTC
+    environment:
+      FRIGATE_RTSP_PASSWORD: "password"  # Измени на свой пароль
 ```
+
+Сохрани файл: `Ctrl+O`, `Enter`, `Ctrl+X`.
+
+> **Примечание:** Начиная с Frigate 0.13+, основной порт для UI — `8971` (с аутентификацией). Порт `5000` — для внутреннего использования без аутентификации.
 
 ---
 
 # 6. 🎥 Настройка камер в Frigate
 
-Создать `config/config.yml`:
+## Подготовка камер (на примере HiWatch DS-I200)
+
+Перед настройкой Frigate нужно правильно настроить камеры.
+
+### Шаг 1: Включить RTSP в камере
+
+Зайди в веб-интерфейс камеры:
+- Камера 1: `http://10.0.0.21`
+- Камера 2: `http://10.0.0.22`
+
+Логин/пароль: обычно `admin/admin` или тот, что установил при первой настройке.
+
+**Путь в меню:**
+```
+Configuration → Network → Advanced Settings → RTSP
+```
+
+**Проверь:**
+- ✅ RTSP включен (Enable RTSP)
+- ✅ Порт: `554` (по умолчанию)
+
+---
+
+### Шаг 2: Настроить потоки видео
+
+**Путь в меню:**
+```
+Configuration → Video/Audio → Stream Settings
+```
+
+**Main Stream (основной поток) — для записи:**
+- Разрешение: 1920x1080 (Full HD) или 1280x720 (HD)
+- Кодек: H.264
+- Битрейт: 2048 Kbps
+- FPS: 15-20
+
+**Sub Stream (дополнительный поток) — для детекции:**
+- Разрешение: 640x480 или 704x576
+- Кодек: H.264
+- Битрейт: 512 Kbps
+- FPS: 10-15
+
+> **Важно:** Sub Stream используется для детекции в Frigate (меньше нагрузка на CPU), Main Stream — для записи высокого качества.
+
+---
+
+### Шаг 3: Создать пользователя для Frigate (рекомендуется)
+
+**Путь в меню:**
+```
+Configuration → System → User Management
+```
+
+- Имя: `frigate`
+- Пароль: `твой_надёжный_пароль`
+- Права: **Operator** (достаточно для просмотра потока)
+
+---
+
+### Шаг 4: RTSP URL для камер
+
+**Формат URL для Hikvision/HiWatch:**
+
+```
+rtsp://username:password@IP:554/Streaming/Channels/101  # Main stream
+rtsp://username:password@IP:554/Streaming/Channels/102  # Sub stream
+```
+
+**Для твоих камер:**
+
+**Камера 1 (10.0.0.21):**
+```
+Main:  rtsp://frigate:password@10.0.0.21:554/Streaming/Channels/101
+Sub:   rtsp://frigate:password@10.0.0.21:554/Streaming/Channels/102
+```
+
+**Камера 2 (10.0.0.22):**
+```
+Main:  rtsp://frigate:password@10.0.0.22:554/Streaming/Channels/101
+Sub:   rtsp://frigate:password@10.0.0.22:554/Streaming/Channels/102
+```
+
+> **Примечание:** Замени `frigate:password` на свои учётные данные.
+
+---
+
+### Шаг 5: Проверка RTSP потока
+
+Перед настройкой Frigate проверь, что потоки работают:
+
+```bash
+# Установи ffmpeg (если ещё не установлен)
+sudo apt install ffmpeg
+
+# Проверь поток камеры 1
+ffmpeg -i rtsp://frigate:password@10.0.0.21:554/Streaming/Channels/102 -frames:v 1 test1.jpg
+
+# Проверь поток камеры 2
+ffmpeg -i rtsp://frigate:password@10.0.0.22:554/Streaming/Channels/102 -frames:v 1 test2.jpg
+```
+
+Если команды выполнились без ошибок и создались файлы `test1.jpg` и `test2.jpg` — всё работает!
+
+Посмотри изображения:
+
+```bash
+ls -lh test*.jpg
+```
+
+---
+
+### Что НЕ нужно менять в камерах:
+
+❌ Не включай облачные сервисы  
+❌ Не включай P2P  
+❌ Не включай Hik-Connect  
+❌ Не открывай порты на роутере (если используешь VPN)  
+❌ Не включай UPnP
+
+---
+
+## Конфигурация Frigate
+
+Создай файл конфигурации:
+
+```bash
+nano ~/frigate/config/config.yml
+```
+
+Вставь следующее содержимое:
 
 ```yaml
 mqtt:
@@ -191,21 +382,98 @@ detectors:
     type: cpu
 
 cameras:
-  front:
+  front_door:  # Камера 1 - входная дверь
     ffmpeg:
       inputs:
-        - path: rtsp://USER:PASS@IP:554/stream1
+        # Sub stream для детекции (меньше нагрузка на CPU)
+        - path: rtsp://frigate:password@10.0.0.21:554/Streaming/Channels/102
           roles:
             - detect
+        # Main stream для записи (высокое качество)
+        - path: rtsp://frigate:password@10.0.0.21:554/Streaming/Channels/101
+          roles:
             - record
     detect:
-      width: 1280
-      height: 720
+      width: 704
+      height: 576
+      fps: 10
       enabled: True
     objects:
       track:
         - person
+        - car
+        - dog
+        - cat
+    record:
+      enabled: True
+      retain:
+        days: 7  # Хранить записи 7 дней
+        mode: motion  # Записывать только при движении
+    snapshots:
+      enabled: True
+      retain:
+        default: 14  # Хранить снимки 14 дней
+  
+  backyard:  # Камера 2 - задний двор
+    ffmpeg:
+      inputs:
+        - path: rtsp://frigate:password@10.0.0.22:554/Streaming/Channels/102
+          roles:
+            - detect
+        - path: rtsp://frigate:password@10.0.0.22:554/Streaming/Channels/101
+          roles:
+            - record
+    detect:
+      width: 704
+      height: 576
+      fps: 10
+      enabled: True
+    objects:
+      track:
+        - person
+        - car
+        - dog
+        - cat
+    record:
+      enabled: True
+      retain:
+        days: 7
+        mode: motion
+    snapshots:
+      enabled: True
+      retain:
+        default: 14
 ```
+
+Сохрани файл: `Ctrl+O`, `Enter`, `Ctrl+X`.
+
+> **Важно:** Замени `frigate:password` на свои учётные данные и измени названия камер (`front_door`, `backyard`) на свои.
+
+---
+
+### Альтернативные RTSP URL (если основной не работает)
+
+Некоторые модели HiWatch/Hikvision используют другие форматы URL:
+
+**Вариант 1 (основной, описан выше):**
+```
+rtsp://user:pass@IP:554/Streaming/Channels/101
+rtsp://user:pass@IP:554/Streaming/Channels/102
+```
+
+**Вариант 2:**
+```
+rtsp://user:pass@IP:554/h264/ch1/main/av_stream
+rtsp://user:pass@IP:554/h264/ch1/sub/av_stream
+```
+
+**Вариант 3:**
+```
+rtsp://user:pass@IP:554/cam/realmonitor?channel=1&subtype=0  # Main
+rtsp://user:pass@IP:554/cam/realmonitor?channel=1&subtype=1  # Sub
+```
+
+Если первый вариант не работает, попробуй другие.
 
 ---
 
@@ -213,11 +481,20 @@ cameras:
 
 ```bash
 cd ~/frigate
-docker-compose up -d
+docker compose up -d
 ```
 
-Открыть:  
-`http://IP:5000`
+> **Примечание:** Используй `docker compose` (с пробелом), а не `docker-compose` (с дефисом). Новая версия Docker Compose — это плагин.
+
+Проверка логов:
+
+```bash
+docker compose logs -f frigate
+```
+
+Открыть UI:  
+- **Authenticated (рекомендуется):** `http://IP:8971`
+- **Internal (без пароля):** `http://IP:5000`
 
 ---
 
@@ -364,9 +641,12 @@ systemctl enable xray
 
 После подключения к Xray:
 
-- Frigate: `http://VPN_IP:5000`  
-- Home Assistant: `http://VPN_IP:8123`  
-- Камеры: `rtsp://VPN_IP/...`
+- **Frigate (authenticated):** `http://VPN_IP:8971`  
+- **Frigate (internal):** `http://VPN_IP:5000`  
+- **Home Assistant:** `http://VPN_IP:8123`  
+- **Камеры:** `rtsp://VPN_IP/...`
+
+> **Рекомендация:** Используй порт 8971 для доступа к Frigate — он требует аутентификацию.
 
 ---
 
