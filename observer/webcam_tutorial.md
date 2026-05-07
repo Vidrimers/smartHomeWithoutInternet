@@ -18,9 +18,10 @@
 8. [Автозапуск через systemd](#8-автозапуск-через-systemd)
 9. [Добавление камеры в Home Assistant](#9-добавление-камеры-в-home-assistant)
 10. [Добавление карточки на дашборд](#10-добавление-карточки-на-дашборд)
-11. [Смена порта](#11-смена-порта)
-12. [Удаление mjpg-streamer](#12-удаление-mjpg-streamer)
-13. [Устранение неполадок](#13-устранение-неполадок)
+11. [Настройка авторизации в mjpg-streamer (опционально)](#11-настройка-авторизации-в-mjpg-streamer-опционально)
+12. [Смена порта](#12-смена-порта)
+13. [Удаление mjpg-streamer](#13-удаление-mjpg-streamer)
+14. [Устранение неполадок](#14-устранение-неполадок)
 
 ---
 
@@ -358,13 +359,43 @@ sudo journalctl -u mjpg-streamer -f
 
 ## 9. Добавление камеры в Home Assistant
 
-Нужно отредактировать файл `configuration.yaml`. Есть три способа — выбери удобный.
+> **⚠️ Важно:** Начиная с Home Assistant 2022.5, MJPEG камеры настраиваются **только через веб-интерфейс**. YAML-конфигурация больше не поддерживается.
+
+### Способ 1 — через веб-интерфейс (рекомендуется)
+
+Это единственный официально поддерживаемый способ для версий HA 2022.5+.
+
+1. Открой Home Assistant в браузере: `http://IP:8123`
+2. Перейди в **Settings → Devices & Services**
+3. Нажми **+ Add Integration** (внизу справа)
+4. В поиске найди **MJPEG IP Camera**
+5. Введи данные:
+   - **MJPEG URL:** `http://10.0.0.3:8090/?action=stream`
+   - **Still Image URL:** `http://10.0.0.3:8090/?action=snapshot`
+   - **Username:** оставь пустым (если не настроил авторизацию в mjpg-streamer)
+   - **Password:** оставь пустым
+   - **Verify SSL certificate:** отключи (для локальной сети не нужно)
+6. Нажми **Submit**
+
+> **🔒 Безопасность:**
+> - **Локальная сеть или VPN:** Username/Password не обязательны — доступ уже ограничен сетью
+> - **Проброс портов в интернет:** Обязательно настрой авторизацию в mjpg-streamer (см. раздел "Настройка авторизации" ниже), иначе любой сможет смотреть твою камеру
+> - **SSL сертификат:** Не нужен для локальной сети или VPN (трафик уже защищён). Нужен только при прямом доступе через интернет без VPN
+
+Камера появится в списке устройств как `camera.mjpeg_ip_camera` (можно переименовать).
+
+> **Не используй** `localhost` или `127.0.0.1` — HA в Docker не найдёт стрим по этому адресу. Всегда используй реальный IP сервера (`10.0.0.3`).
 
 ---
 
-### Способ 1 — File Editor (через веб-интерфейс HA)
+### Способ 2 — YAML (только для старых версий HA < 2022.5)
 
-Самый простой способ, не нужен терминал.
+> **⚠️ Этот способ не работает в Home Assistant 2022.5 и новее!** Оставлен только для справки.
+
+<details>
+<summary>Развернуть инструкцию для старых версий</summary>
+
+#### Через File Editor (аддон)
 
 1. **Settings → Add-ons → Add-on Store**
 2. Найди **File Editor** и установи
@@ -382,11 +413,11 @@ mjpeg:
 
 5. Сохрани файл
 
-> Если аддоны недоступны — ты используешь HA Container (Docker). Переходи к Способу 2 или 3.
+> Если аддоны недоступны — ты используешь HA Container (Docker). Переходи к следующему варианту.
 
 ---
 
-### Способ 2 — через терминал на сервере (Docker)
+#### Через терминал на сервере (Docker)
 
 Найди папку с конфигом HA — ту, что примонтирована в контейнер:
 
@@ -406,7 +437,7 @@ docker inspect homeassistant | grep -A5 Mounts
 
 Значит конфиг лежит по пути `/home/user/homeassistant/configuration.yaml`.
 
-#### Исправление прав доступа (если получаешь "Отказано в доступе")
+##### Исправление прав доступа (если получаешь "Отказано в доступе")
 
 Docker создаёт папку от имени `root`, поэтому обычный пользователь не может редактировать файлы. Исправь права:
 
@@ -450,7 +481,7 @@ mjpeg:
 
 ---
 
-### Способ 3 — внутри контейнера Docker
+#### Внутри контейнера Docker
 
 Если не знаешь где лежит папка с конфигом — можно зайти прямо внутрь контейнера:
 
@@ -468,7 +499,7 @@ mjpeg:
     mjpeg_url: "http://10.0.0.3:8090/?action=stream"
 ```
 
-> **Важно:** В новых версиях Home Assistant (2023+) используется формат `mjpeg:` вместо устаревшего `camera: - platform: mjpeg`
+> **Примечание:** Формат `mjpeg:` работает только в версиях HA 2022.4 и ниже. В версиях 2022.5+ YAML-конфигурация полностью удалена.
 
 Сохрани: `Ctrl+O`, `Enter`, `Ctrl+X`. Выйди из контейнера:
 
@@ -476,7 +507,7 @@ mjpeg:
 exit
 ```
 
-> Не используй `localhost` или `127.0.0.1` — HA в Docker не найдёт стрим по этому адресу, всегда используй реальный IP `10.0.0.3`.
+</details>
 
 ---
 
@@ -492,9 +523,9 @@ docker restart homeassistant
 
 ### Проверка в HA
 
-Перейди в **Settings → Devices & Services → Entities** и найди `camera.veb_kamera`.
+Перейди в **Settings → Devices & Services → Integrations** и найди **MJPEG IP Camera**.
 
-Или проверь через **Developer Tools → States** — в списке должна появиться сущность с префиксом `camera.`.
+Или проверь через **Developer Tools → States** — в списке должна появиться сущность `camera.mjpeg_ip_camera` (или другое имя, которое ты указал).
 
 ---
 
@@ -503,7 +534,7 @@ docker restart homeassistant
 1. Открой нужный дашборд
 2. Нажми **Edit → Add Card**
 3. Выбери **Picture Entity** или **Picture Glance**
-4. В поле Entity выбери `camera.veb_kamera`
+4. В поле Entity выбери `camera.mjpeg_ip_camera` (или имя, которое ты указал при настройке)
 5. Сохрани
 
 Или добавь вручную через YAML редактор карточки:
@@ -512,12 +543,68 @@ docker restart homeassistant
 type: picture-glance
 title: Камера
 entities: []
-camera_image: camera.veb_kamera
+camera_image: camera.mjpeg_ip_camera
 ```
 
 ---
 
-## 11. Смена порта
+## 11. Настройка авторизации в mjpg-streamer (опционально)
+
+> **Когда нужно:** Если планируешь открывать доступ к камере через интернет **без VPN** (проброс портов). Для локальной сети или VPN — не обязательно.
+
+mjpg-streamer поддерживает базовую HTTP-авторизацию через параметр `-c` (credentials).
+
+### Добавление авторизации
+
+Отредактируй файл сервиса:
+
+```bash
+sudo nano /etc/systemd/system/mjpg-streamer.service
+```
+
+**Для Варианта A (snap):**
+
+```ini
+ExecStart=/snap/bin/mjpg-streamer \
+  -i "input_uvc.so -d /dev/video0 -r 1280x720 -f 15" \
+  -o "output_http.so -p 8090 -c username:password"
+```
+
+**Для Варианта B (исходники):**
+
+```ini
+ExecStart=/usr/local/bin/mjpg_streamer \
+  -i "input_uvc.so -d /dev/video0 -r 1280x720 -f 15" \
+  -o "output_http.so -p 8090 -w /usr/local/share/mjpg-streamer/www -c username:password"
+```
+
+Замени `username:password` на свои данные, например `-c admin:secretpass123`.
+
+### Перезапуск сервиса
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart mjpg-streamer
+```
+
+### Проверка
+
+Открой в браузере `http://10.0.0.3:8090/?action=stream` — должно запросить логин и пароль.
+
+### Обновление Home Assistant
+
+После включения авторизации обнови интеграцию MJPEG IP Camera:
+
+1. **Settings → Devices & Services → MJPEG IP Camera**
+2. Нажми **Configure**
+3. Введи **Username** и **Password**
+4. Сохрани
+
+Или удали старую интеграцию и добавь заново с учётными данными.
+
+---
+
+## 12. Смена порта
 
 Если нужно изменить порт (например с `8090` на `8080`), поменяй его в трёх местах.
 
@@ -554,6 +641,10 @@ sudo ufw reload
 
 ### Шаг 3 — обнови configuration.yaml в Home Assistant
 
+> **⚠️ Важно:** Начиная с Home Assistant 2022.5, MJPEG камеры настраиваются только через UI (Settings → Devices & Services → Add Integration → MJPEG IP Camera). YAML-конфигурация больше не поддерживается.
+
+Если используешь старую версию HA (< 2022.5), добавь в `configuration.yaml`:
+
 ```yaml
 mjpeg:
   - name: "Веб-камера"
@@ -561,11 +652,16 @@ mjpeg:
     mjpeg_url: "http://10.0.0.3:8080/?action=stream"
 ```
 
+Для новых версий HA:
+1. Settings → Devices & Services → Add Integration
+2. Найди **MJPEG IP Camera**
+3. Введи новые URL с портом 8080
+
 Перезапусти HA: **Settings → System → Restart**
 
 ---
 
-## 12. Удаление mjpg-streamer
+## 13. Удаление mjpg-streamer
 
 ### Шаг 1 — остановить сервис (для обоих вариантов)
 
@@ -635,7 +731,7 @@ sudo apt autoremove -y
 
 ---
 
-## 13. Устранение неполадок
+## 14. Устранение неполадок
 
 ### Камера не найдена (`/dev/video0` нет)
 
