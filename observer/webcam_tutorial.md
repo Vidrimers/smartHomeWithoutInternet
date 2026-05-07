@@ -372,12 +372,13 @@ sudo journalctl -u mjpg-streamer -f
 4. Добавь в конец файла:
 
 ```yaml
-camera:
-  - platform: mjpeg
-    name: "Веб-камера"
+mjpeg:
+  - name: "Веб-камера"
     still_image_url: "http://10.0.0.3:8090/?action=snapshot"
     mjpeg_url: "http://10.0.0.3:8090/?action=stream"
 ```
+
+> **Важно:** В новых версиях Home Assistant (2023+) используется формат `mjpeg:` вместо устаревшего `camera: - platform: mjpeg`
 
 5. Сохрани файл
 
@@ -437,12 +438,13 @@ nano /home/$USER/homeassistant/configuration.yaml
 Добавь в конец файла:
 
 ```yaml
-camera:
-  - platform: mjpeg
-    name: "Веб-камера"
+mjpeg:
+  - name: "Веб-камера"
     still_image_url: "http://10.0.0.3:8090/?action=snapshot"
     mjpeg_url: "http://10.0.0.3:8090/?action=stream"
 ```
+
+> **Важно:** В новых версиях Home Assistant (2023+) используется формат `mjpeg:` вместо устаревшего `camera: - platform: mjpeg`
 
 Сохрани: `Ctrl+O`, `Enter`, `Ctrl+X`.
 
@@ -460,12 +462,13 @@ nano /config/configuration.yaml
 Добавь в конец файла:
 
 ```yaml
-camera:
-  - platform: mjpeg
-    name: "Веб-камера"
+mjpeg:
+  - name: "Веб-камера"
     still_image_url: "http://10.0.0.3:8090/?action=snapshot"
     mjpeg_url: "http://10.0.0.3:8090/?action=stream"
 ```
+
+> **Важно:** В новых версиях Home Assistant (2023+) используется формат `mjpeg:` вместо устаревшего `camera: - platform: mjpeg`
 
 Сохрани: `Ctrl+O`, `Enter`, `Ctrl+X`. Выйди из контейнера:
 
@@ -552,9 +555,8 @@ sudo ufw reload
 ### Шаг 3 — обнови configuration.yaml в Home Assistant
 
 ```yaml
-camera:
-  - platform: mjpeg
-    name: "Веб-камера"
+mjpeg:
+  - name: "Веб-камера"
     still_image_url: "http://10.0.0.3:8080/?action=snapshot"
     mjpeg_url: "http://10.0.0.3:8080/?action=stream"
 ```
