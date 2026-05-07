@@ -403,10 +403,35 @@ docker inspect homeassistant | grep -A5 Mounts
 ]
 ```
 
-Значит конфиг лежит по пути `/home/user/homeassistant/configuration.yaml`. Открой его:
+Значит конфиг лежит по пути `/home/user/homeassistant/configuration.yaml`.
+
+#### Исправление прав доступа (если получаешь "Отказано в доступе")
+
+Docker создаёт папку от имени `root`, поэтому обычный пользователь не может редактировать файлы. Исправь права:
 
 ```bash
-nano /home/user/homeassistant/configuration.yaml
+# $USER — это переменная, которая автоматически подставит твоё имя пользователя
+sudo chown -R $USER:$USER /home/$USER/homeassistant
+
+# Или можешь вписать имя вручную (например для пользователя vidrimers):
+# sudo chown -R vidrimers:vidrimers /home/vidrimers/homeassistant
+```
+
+Проверка:
+
+```bash
+ls -la /home/$USER/homeassistant/configuration.yaml
+```
+
+Должно быть:
+```
+-rw-r--r-- 1 user user ... configuration.yaml
+```
+
+Теперь можешь редактировать файл:
+
+```bash
+nano /home/$USER/homeassistant/configuration.yaml
 ```
 
 Добавь в конец файла:
