@@ -265,6 +265,44 @@ Home Assistant позволяет **редактировать UI-дашборд
 
 > **⚠️ Важно (2026):** Старый формат `lovelace: mode: yaml` устарел и будет удалён в HA 2026.8. Используй новый формат ниже.
 
+### Как редактировать configuration.yaml
+
+Если HA запущен в **Docker** (не Home Assistant OS), аддоны типа File Editor недоступны. Редактируй файл напрямую через терминал.
+
+**Найди путь к файлу:**
+
+При запуске HA через Docker конфиг монтируется в папку на хосте. Например:
+
+```bash
+# Посмотри, куда смонтирован /config
+docker inspect homeassistant | grep -A 5 "Mounts"
+```
+
+Обычно это `/home/username/ha/` или `/home/username/homeassistant/`.
+
+**Открой файл в nano:**
+
+```bash
+nano /home/$USER/homeassistant/configuration.yaml
+```
+
+**Навигация в nano:**
+- `Ctrl+End` — перейти в конец файла
+- `Ctrl+O` → `Enter` — сохранить
+- `Ctrl+X` — выйти
+
+**После любых изменений** перезапусти HA:
+
+Settings → System → **Restart**
+
+Или через терминал:
+
+```bash
+docker restart homeassistant
+```
+
+---
+
 **Новый формат (2026+):**
 
 Отредактируй `configuration.yaml`:
@@ -1284,6 +1322,65 @@ lovelace:
 2. Не редактируй главный дашборд "Overview" напрямую
 3. Используй функцию "Duplicate dashboard" для создания копии
 4. Тестируй на разных устройствах (телефон, планшет, десктоп)
+
+---
+
+## 12. 🔗 Встроенные внешние страницы (panel_iframe)
+
+Можно добавить внешние веб-сервисы прямо в боковое меню HA — они откроются как встроенная панель.
+
+**Примеры использования:**
+- Frigate NVR (видеонаблюдение)
+- Grafana (графики)
+- Node-RED (автоматизации)
+- Роутер, NAS и другие локальные сервисы
+
+### Добавление через configuration.yaml
+
+```bash
+nano /home/$USER/homeassistant/configuration.yaml
+```
+
+Добавь в конец файла:
+
+```yaml
+panel_iframe:
+  frigate_nvr:
+    title: "Frigate NVR"
+    url: "http://10.0.0.3:5000"
+    icon: mdi:cctv
+  router:
+    title: "Роутер"
+    url: "http://192.168.1.1"
+    icon: mdi:router-wireless
+```
+
+Сохрани: `Ctrl+O`, `Enter`, `Ctrl+X`
+
+Перезапусти HA:
+
+```bash
+docker restart homeassistant
+```
+
+После перезапуска в боковом меню появятся новые пункты.
+
+> **Важно:** URL должен быть доступен из браузера пользователя, а не только с сервера. Для локальных сервисов используй IP адрес в локальной сети.
+
+> **Ограничение:** Некоторые сайты блокируют встраивание через iframe (например, Google). Для таких сервисов используй карточку-кнопку со ссылкой вместо panel_iframe.
+
+### Добавление кнопки-ссылки на дашборд
+
+Если panel_iframe не подходит, добавь кнопку на дашборд:
+
+```yaml
+type: button
+name: Открыть Frigate
+icon: mdi:cctv
+tap_action:
+  action: url
+  url_path: http://10.0.0.3:5000
+```
 
 ---
 
