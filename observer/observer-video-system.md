@@ -825,6 +825,260 @@ docker compose logs -f frigate | grep indoor_usb
 
 ---
 
+### Шаг 6: Оптимизация USB камеры — снижение нагрузки CPU
+
+#### Почему USB камера использует больше CPU чем IP камеры?
+
+**Типичная нагрузка:**
+- IP камера (RTSP, H.264): 3-5% CPU
+- USB камера (MJPEG): **15-25% CPU**
+
+**Причины:**
+
+1. **Формат MJPEG требует больше CPU**
+   - Каждый кадр = отдельное JPEG изображение
+   - FFmpeg декодирует каждый кадр отдельно
+   - IP камеры используют H.264 (более эффективный)
+
+2. **Нет аппаратного ускорения**
+   - `hwaccel_args: []` — GPU не используется
+   - Вся обработка на CPU
+
+3. **Один поток для детекции И записи**
+   - IP камеры: 2 потока (Sub Stream + Main Stream)
+   - USB камера: 1 поток для всего
+
+---
+
+#### ⚠️ Важно: Разрешение в detect должно совпадать с input_args
+
+**Нельзя делать так:**
+
+```yaml
+# ❌ НЕПРАВИЛЬНО
+input_args: ... -video_size 1280x720 ...
+detect:
+  width: 640   # Не совпадает!
+  height: 480
+```
+
+**Почему это не работает:**
+- FFmpeg захватывает видео с разрешением из `input_args`
+- Frigate получает кадры **без изменения размера**
+- Если разрешения не совпадают → ошибка или искажение
+
+**Правильно:**
+
+```yaml
+# ✅ ПРАВИЛЬНО
+input_args: ... -video_size 640x480 ...
+detect:
+  width: 640   # Совпадает!
+  height: 480
+```
+
+---
+
+#### Как проверить поддерживаемые форматы камеры
+
+```bash
+# Установи утилиты
+sudo apt install v4l-utils
+
+# Проверь форматы
+v4l2-ctl --list-formats-ext -d /dev/video0
+```
+
+**Пример вывода:**
+
+```
+[0]: 'MJPG' (Motion-JPEG, compressed)
+    Size: Discrete 640x480
+        Interval: Discrete 0.033s (30.000 fps)
+    Size: Discrete 1280x720
+        Interval: Discrete 0.033s (30.000 fps)
+    Size: Discrete 1920x1080
+        Interval: Discrete 0.033s (30.000 fps)
+```
+
+Используй формат **MJPEG** — он лучше всего подходит для Frigate.
+
+---
+
+#### Проверка наличия второго устройства
+
+Некоторые USB камеры создают два устройства (`/dev/video0` и `/dev/video1`):
+
+```bash
+ls -l /dev/video*
+v4l2-ctl --list-formats-ext -d /dev/video1
+```
+
+**Если `/dev/video1` показывает ошибку `ioctl: VIDIOC_ENUM_FMT`** — это устройство управления, а не видеопоток. Используй только `/dev/video0`.
+
+---
+
+#### 📊 Три варианта конфигурации
+
+##### Вариант 1: Максимальная экономия CPU (рекомендуется)
+
+```yaml
+indoor_usb:
+  ffmpeg:
+    hwaccel_args: []
+    inputs:
+      - path: /dev/video0
+        input_args: -f v4l2 -input_format mjpeg -video_size 640x480 -framerate 20
+        roles:
+          - detect
+          - record
+  detect:
+    width: 640
+    height: 480
+    fps: 10  # Анализировать 10 кадров из 20
+    enabled: true
+  objects:
+    track:
+      - person
+  record:
+    enabled: true
+    continuous:
+      days: 0
+    motion:
+      days: 3
+  snapshots:
+    enabled: true
+    retain:
+      default: 7
+```
+
+**Результат:**
+- CPU: ~8-10% (вместо 21%)
+- Качество: Достаточно для детекции человека
+- Место на диске: ~300-500 MB/сутки
+
+---
+
+##### Вариант 2: Баланс качества и производительности
+
+```yaml
+indoor_usb:
+  ffmpeg:
+    hwaccel_args: []
+    inputs:
+      - path: /dev/video0
+        input_args: -f v4l2 -input_format mjpeg -video_size 1280x720 -framerate 20
+        roles:
+          - detect
+          - record
+  detect:
+    width: 1280
+    height: 720
+    fps: 10
+    enabled: true
+  objects:
+    track:
+      - person
+  record:
+    enabled: true
+    continuous:
+      days: 0
+    motion:
+      days: 3
+  snapshots:
+    enabled: true
+    retain:
+      default: 7
+```
+
+**Результат:**
+- CPU: ~15-18%
+- Качество: Хорошее (HD)
+- Место на диске: ~1-1.5 GB/сутки
+
+---
+
+##### Вариант 3: Максимальное качество
+
+```yaml
+indoor_usb:
+  ffmpeg:
+    hwaccel_args: []
+    inputs:
+      - path: /dev/video0
+        input_args: -f v4l2 -input_format mjpeg -video_size 1920x1080 -framerate 20
+        roles:
+          - detect
+          - record
+  detect:
+    width: 1920
+    height: 1080
+    fps: 10
+    enabled: true
+  objects:
+    track:
+      - person
+  record:
+    enabled: true
+    continuous:
+      days: 0
+    motion:
+      days: 3
+  snapshots:
+    enabled: true
+    retain:
+      default: 7
+```
+
+**Результат:**
+- CPU: ~25-30%
+- Качество: Отличное (Full HD)
+- Место на диске: ~2-3 GB/сутки
+
+---
+
+#### 💡 Почему 20 fps вместо 30?
+
+1. **Для детекции человека 10 fps достаточно** — человек не телепортируется
+2. **Framerate 20 → анализ 10 fps** = экономия 33% CPU
+3. **Запись в 20 fps всё ещё плавная** (кино снимают в 24 fps)
+
+---
+
+#### Сравнительная таблица
+
+| Параметр | 640x480 @ 20fps | 1280x720 @ 20fps | 1920x1080 @ 20fps |
+|----------|-----------------|------------------|-------------------|
+| CPU FFmpeg | ~8-10% | ~15-18% | ~25-30% |
+| Качество записи | Среднее | Хорошее | Отличное |
+| Качество детекции | ✅ Отлично | ✅ Отлично | ✅ Отлично |
+| Место на диске (сутки) | ~300-500 MB | ~1-1.5 GB | ~2-3 GB |
+
+**Вывод:** Для детекции человека **640x480 достаточно**. Высокое разрешение нужно только если хочешь рассмотреть мелкие детали на записи (номера машин, лица).
+
+---
+
+#### Как применить изменения
+
+1. Открой конфиг:
+```bash
+nano ~/frigate/config/config.yml
+```
+
+2. Измени параметры камеры
+
+3. Сохрани: `Ctrl+O`, `Enter`, `Ctrl+X`
+
+4. Перезапусти Frigate:
+```bash
+cd ~/frigate
+docker compose restart
+```
+
+5. Проверь нагрузку через 1-2 минуты в Frigate UI (System → Stats)
+
+---
+
 # 7. ▶ Запуск Frigate
 
 ## 7.1. Первый запуск
