@@ -45,6 +45,17 @@
 
 ---
 
+### 🖥️ Дисплеи и мониторы
+
+- **turing-smart-screen-guide.md** — Turing Smart Screen + Home Assistant:
+  - Установка на Ubuntu/Linux
+  - Интеграция с Home Assistant через IoTuring
+  - Создание кастомных тем
+  - Отображение данных HA на экране
+  - Автозапуск и troubleshooting
+
+---
+
 ### 📹 Видеонаблюдение (Frigate)
 
 - **observer/observer-video-system.md** — Система видеонаблюдения:
