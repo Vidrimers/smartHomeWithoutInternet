@@ -28,6 +28,7 @@
    - [9.2. Добавить в Home Assistant](#92-добавить-в-home-assistant)
 10. [👤 Автоматизация уведомлений](#10--автоматизация-уведомлений)
 11. [🖥 Автовключение монитора (HDMI‑CEC)](#11--автовключение-монитора-hdmicec)
+    - [11.1. Альтернатива: BroadLink RM4C Mini (без HDMI‑CEC)](#111-альтернатива-broadlink-rm4c-mini-без-hdmicec)
 12. [🌍 Удалённый доступ через Xray VPN](#12--удалённый-доступ-через-xray-vpn)
     - [12.1. Установка Xray client](#121-установка-xray-client)
     - [12.2. Конфиг клиента](#122-конфиг-клиента)
@@ -1275,6 +1276,67 @@ echo "on 0" | cec-client -s -d 1
 shell_command:
   monitor_on: 'echo "on 0" | cec-client -s -d 1'
 ```
+
+> ⚠️ Требует поддержки HDMI‑CEC на мониторе/телевизоре. Если её нет (например, Samsung UE39F5000AK и другие бюджетные модели без Anynet+) — используй BroadLink RM4C Mini (см. раздел 11.1).
+
+---
+
+## 11.1. Альтернатива: BroadLink RM4C Mini (без HDMI‑CEC)
+
+Если телевизор не поддерживает HDMI‑CEC, можно управлять им через ИК-бластер BroadLink RM4C Mini. Он интегрируется в Home Assistant нативно, без HACS.
+
+### Подключение устройства
+
+1. Установи приложение **BroadLink** на телефон
+2. Добавь RM4C Mini в приложение (подключит к Wi-Fi через Bluetooth)
+3. Зафиксируй IP устройства в роутере (DHCP reservation) — HA будет обращаться по нему
+4. В Home Assistant: **Settings → Integrations → Add Integration → BroadLink**  
+   HA обнаружит устройство автоматически, либо введи IP вручную
+
+### Обучение ИК-команде (Power)
+
+В **Developer Tools → Actions** выполни:
+
+```yaml
+action: remote.learn_command
+target:
+  entity_id: remote.broadlink_rm4c_mini
+data:
+  device: samsung_tv
+  command: power
+```
+
+После вызова направь пульт от телевизора на RM4C Mini и нажми кнопку **Power** — команда запишется.
+
+### Использование в автоматизации
+
+```yaml
+action: remote.send_command
+target:
+  entity_id: remote.broadlink_rm4c_mini
+data:
+  device: samsung_tv
+  command: power
+```
+
+### Добавить в Home Assistant (shell_command-стиль через сервис)
+
+Или через `script` для удобного вызова из других автоматизаций:
+
+```yaml
+script:
+  tv_power_toggle:
+    alias: "TV Power Toggle"
+    sequence:
+      - action: remote.send_command
+        target:
+          entity_id: remote.broadlink_rm4c_mini
+        data:
+          device: samsung_tv
+          command: power
+```
+
+> 💡 RM4C Mini — только ИК (без RF). Убедись, что устройство расположено с прямой видимостью на ИК-приёмник телевизора (обычно снизу по центру панели).
 
 ---
 
