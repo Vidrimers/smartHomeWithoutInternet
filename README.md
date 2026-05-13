@@ -6,7 +6,7 @@
 
 ### 🏠 Основная система
 
-- **smart-home-without-internet.md** — Подробное руководство по сборке умного дома:
+- **[smart-home-without-internet.md](smart-home-without-internet.md)** — Подробное руководство по сборке умного дома:
   - Выбор и установка сервера (мини-ПК или Raspberry Pi)
   - Настройка Zigbee-координатора для связи с устройствами
   - Выбор умных устройств (лампочки, датчики и т.д.)
@@ -14,12 +14,12 @@
   - Управление ИК-устройствами через Broadlink RM4 Mini
   - Пошаговый порядок настройки
 
-- **ha-dashboards-guide.md** — Создание дашбордов в Home Assistant:
+- **[ha-dashboards-guide.md](ha-dashboards-guide.md)** — Создание дашбордов в Home Assistant:
   - Настройка интерфейса
   - Карточки и виджеты
   - Организация устройств
 
-- **remote-access-ha.md** — Удалённый доступ к Home Assistant:
+- **[remote-access-ha.md](remote-access-ha.md)** — Удалённый доступ к Home Assistant:
   - Настройка безопасного доступа
   - VPN и другие методы
   - Рекомендации по безопасности
@@ -28,17 +28,17 @@
 
 ### 🎤 Голосовое управление
 
-- **esp32-s3-box-3b-voice-assistant.md** — Настройка ESP32-S3-BOX-3B:
+- **[esp32-s3-box-3b-voice-assistant.md](esp32-s3-box-3b-voice-assistant.md)** — Настройка ESP32-S3-BOX-3B:
   - Голосовой ассистент на базе ESP32
   - Интеграция с Home Assistant
   - Локальное распознавание речи
 
-- **esp32-s3-box-3b-custom-display.md** — Кастомизация дисплея ESP32-S3-BOX-3B:
+- **[esp32-s3-box-3b-custom-display.md](esp32-s3-box-3b-custom-display.md)** — Кастомизация дисплея ESP32-S3-BOX-3B:
   - Настройка интерфейса
   - Отображение информации
   - Управление через экран
 
-- **WakeWord-custom.md** — Создание кастомных wake words:
+- **[WakeWord-custom.md](WakeWord-custom.md)** — Создание кастомных wake words:
   - Обучение собственных слов активации
   - Настройка чувствительности
   - Интеграция с голосовым ассистентом
@@ -47,7 +47,7 @@
 
 ### 🖥️ Дисплеи и мониторы
 
-- **turing-smart-screen-guide.md** — Turing Smart Screen + Home Assistant:
+- **[turing-smart-screen-guide.md](turing-smart-screen-guide.md)** — Turing Smart Screen + Home Assistant:
   - Установка на Ubuntu/Linux
   - Интеграция с Home Assistant через IoTuring
   - Создание кастомных тем
@@ -58,46 +58,46 @@
 
 ### 📹 Видеонаблюдение (Frigate)
 
-- **observer/1. observer-video-system.md** — Система видеонаблюдения:
+- **[observer/1. observer-video-system.md](observer/1.%20observer-video-system.md)** — Система видеонаблюдения:
   - Детекция человека через Frigate
   - Интеграция с Home Assistant
   - Удалённый доступ через Xray VPN
   - Рекомендуемое оборудование (камеры, PoE-коммутаторы и т.д.)
   - Аппаратное ускорение AMD GPU (VA-API + OpenVINO)
 
-- **observer/2. observer-camera-cable-guide.md** — Практическое руководство по монтажу:
+- **[observer/2. observer-camera-cable-guide.md](observer/2.%20observer-camera-cable-guide.md)** — Практическое руководство по монтажу:
   - Выбор и прокладка уличных кабелей для PoE-камер
   - Правильное сверление отверстий в стене
   - Защита кабелей от влаги и мороза
 
-- **observer/3. frigate-usb-camera-tutorial.md** — Подключение USB веб-камеры:
+- **[observer/3. frigate-usb-camera-tutorial.md](observer/3.%20frigate-usb-camera-tutorial.md)** — Подключение USB веб-камеры:
   - Настройка USB камеры в Frigate
   - Выбор разрешения и FPS
   - Интеграция с детекцией объектов
 
-- **observer/4. frigate-usb-camera-cpu-optimization.md** — Оптимизация USB камер:
+- **[observer/4. frigate-usb-camera-cpu-optimization.md](observer/4.%20frigate-usb-camera-cpu-optimization.md)** — Оптимизация USB камер:
   - Почему USB камеры используют больше CPU
   - Как снизить нагрузку с 21% до 8-10%
   - Оптимальные настройки разрешения и FPS
   - Сравнение вариантов конфигурации
 
-- **observer/5. frigate-camera-optimization.md** — Общая оптимизация камер:
+- **[observer/5. frigate-camera-optimization.md](observer/5.%20frigate-camera-optimization.md)** — Общая оптимизация камер:
   - Настройка зон детекции
   - Оптимизация нагрузки на CPU и GPU
   - Тонкая настройка детектора
 
-- **observer/6. frigate-retain-guide.md** — Настройка хранения данных Frigate:
+- **[observer/6. frigate-retain-guide.md](observer/6.%20frigate-retain-guide.md)** — Настройка хранения данных Frigate:
   - Объяснение параметров конфигурации
   - Режимы записи (continuous, motion, detections, alerts)
   - Оптимизация места на диске
 
-- **observer/7. frigate-automations-guide.md** — Автоматизации Frigate + Home Assistant:
+- **[observer/7. frigate-automations-guide.md](observer/7.%20frigate-automations-guide.md)** — Автоматизации Frigate + Home Assistant:
   - Настройка MQTT для интеграции
   - Примеры автоматизаций (уведомления, включение света и т.д.)
   - Использование зон детекции
   - Советы по оптимизации
 
-- **observer/8. FRIGATE-QUICK-REFERENCE.md** — 📚 Быстрая справка по Frigate:
+- **[observer/8. FRIGATE-QUICK-REFERENCE.md](observer/8.%20FRIGATE-QUICK-REFERENCE.md)** — 📚 Быстрая справка по Frigate:
   - Основные команды
   - Оптимальные настройки
   - Частые ошибки и их решения
@@ -107,12 +107,12 @@
 
 ### 🔌 Интеграции устройств
 
-- **localtuya-ru.md** — Интеграция Tuya устройств локально:
+- **[localtuya-ru.md](localtuya-ru.md)** — Интеграция Tuya устройств локально:
   - Настройка LocalTuya
   - Подключение устройств без облака
   - Получение localKey
 
-- **localKey.md** — Получение localKey для Tuya устройств:
+- **[localKey.md](localKey.md)** — Получение localKey для Tuya устройств:
   - Пошаговая инструкция
   - Необходимые инструменты
   - Troubleshooting
