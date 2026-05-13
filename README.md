@@ -58,41 +58,50 @@
 
 ### 📹 Видеонаблюдение (Frigate)
 
-- **observer/observer-video-system.md** — Система видеонаблюдения:
+- **observer/1. observer-video-system.md** — Система видеонаблюдения:
   - Детекция человека через Frigate
   - Интеграция с Home Assistant
   - Удалённый доступ через Xray VPN
   - Рекомендуемое оборудование (камеры, PoE-коммутаторы и т.д.)
-  - Оптимизация USB веб-камер (снижение нагрузки CPU)
+  - Аппаратное ускорение AMD GPU (VA-API + OpenVINO)
 
-- **observer/QUICK-REFERENCE.md** — 📚 Быстрая справка по Frigate:
-  - Основные команды
-  - Оптимальные настройки
-  - Частые ошибки и их решения
-  - Отладка
+- **observer/2. observer-camera-cable-guide.md** — Практическое руководство по монтажу:
+  - Выбор и прокладка уличных кабелей для PoE-камер
+  - Правильное сверление отверстий в стене
+  - Защита кабелей от влаги и мороза
 
-- **observer/usb-camera-cpu-optimization.md** — Краткое руководство:
+- **observer/3. frigate-usb-camera-tutorial.md** — Подключение USB веб-камеры:
+  - Настройка USB камеры в Frigate
+  - Выбор разрешения и FPS
+  - Интеграция с детекцией объектов
+
+- **observer/4. frigate-usb-camera-cpu-optimization.md** — Оптимизация USB камер:
   - Почему USB камеры используют больше CPU
   - Как снизить нагрузку с 21% до 8-10%
   - Оптимальные настройки разрешения и FPS
   - Сравнение вариантов конфигурации
 
-- **observer/frigate-retain-guide.md** — Настройка хранения данных Frigate:
+- **observer/5. frigate-camera-optimization.md** — Общая оптимизация камер:
+  - Настройка зон детекции
+  - Оптимизация нагрузки на CPU и GPU
+  - Тонкая настройка детектора
+
+- **observer/6. frigate-retain-guide.md** — Настройка хранения данных Frigate:
   - Объяснение параметров конфигурации
   - Режимы записи (continuous, motion, detections, alerts)
   - Оптимизация места на диске
-  - Оптимизация USB камер
 
-- **observer/frigate-automations-guide.md** — Автоматизации Frigate + Home Assistant:
+- **observer/7. frigate-automations-guide.md** — Автоматизации Frigate + Home Assistant:
   - Настройка MQTT для интеграции
   - Примеры автоматизаций (уведомления, включение света и т.д.)
   - Использование зон детекции
   - Советы по оптимизации
 
-- **observer/observer-camera-cable-guide.md** — Практическое руководство по монтажу:
-  - Выбор и прокладка уличных кабелей для PoE-камер
-  - Правильное сверление отверстий в стене
-  - Защита кабелей от влаги и мороза
+- **observer/8. FRIGATE-QUICK-REFERENCE.md** — 📚 Быстрая справка по Frigate:
+  - Основные команды
+  - Оптимальные настройки
+  - Частые ошибки и их решения
+  - Отладка
 
 ---
 
